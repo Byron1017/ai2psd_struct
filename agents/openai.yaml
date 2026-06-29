@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI2Psd Struct"
+  short_description: "UI image packages with atomic assets"
+  default_prompt: "Use $ai2psd-struct to generate UI references plus complete synchronized atomic assets, foundation boards, contact sheets, QA logs, and manifests for editable Figma reconstruction and development handoff."
