@@ -1,12 +1,14 @@
 # ai2psd-struct
 
-`ai2psd-struct` is a Codex skill for generating structured UI design-image packages that can later be rebuilt into editable Figma source.
+`ai2psd-struct` is an agent-agnostic skill for generating structured UI design-image packages that can later be rebuilt into editable Figma source.
 
-It is designed for workflows where a UI image is not enough. The skill produces synchronized screen references, foundation boards, transparent atomic assets, page-local resources, component-state assets, manifests, QA records, and handoff metadata so downstream tools such as `ai2figma-struct` can reconstruct screens without guessing, substituting similar assets, or relying on large flattened screenshot slices.
+It is designed for AI agents that need to create more than a flat UI mockup. The skill defines a production workflow for synchronized screen references, foundation boards, transparent atomic assets, page-local resources, component-state assets, manifests, QA records, repair logs, and handoff metadata.
+
+Downstream reconstruction tools, including `ai2figma-struct`, can consume these packages to rebuild editable Figma layers without guessing, substituting similar assets, inventing inconsistent components, or relying on large flattened screenshot slices.
 
 ## What It Does
 
-`ai2psd-struct` helps Codex create development-usable UI source packages:
+`ai2psd-struct` helps AI agents create development-usable UI source packages:
 
 - UI screen reference images
 - Visual spec, component library, and asset library boards
@@ -14,9 +16,9 @@ It is designed for workflows where a UI image is not enough. The skill produces 
 - Complete per-screen page-local assets
 - Component-state assets for navigation, tabs, buttons, chips, cards, badges, and other repeated UI states
 - Asset contact sheets for visual QA
-- Mapping manifests for Figma reconstruction
+- Mapping manifests for editable design reconstruction
 - Repair logs and known-defect records
-- Handoff notes for `ai2figma-struct`
+- Handoff notes for downstream Figma reconstruction
 
 The priority order is:
 
@@ -26,9 +28,26 @@ The priority order is:
 
 Pixel matching is treated as a QA target, not a reason to flatten the interface into bitmap chunks.
 
+## Who Can Use It
+
+This repository is not tied to one AI agent runtime.
+
+Any agent, IDE assistant, automation runner, or design-generation workflow can use this skill if it can read the package files and follow the workflow contract.
+
+Typical hosts include:
+
+- Codex-style skill runtimes
+- Claude-style project or skill folders
+- Cursor or IDE agent rule/workflow folders
+- Custom AI-agent systems
+- Internal design automation pipelines
+- MCP-like agent toolchains
+
+The skill is intentionally portable. The installer may copy the package into a specific agent's skill directory, but the workflow itself is agent-neutral.
+
 ## When To Use It
 
-Use this skill when you want Codex to generate or organize UI images that must later become editable design source, especially when the request includes:
+Use this skill when an AI agent needs to generate or organize UI images that must later become editable design source, especially when the request includes:
 
 - Figma reconstruction
 - Source-file rebuild
@@ -37,6 +56,7 @@ Use this skill when you want Codex to generate or organize UI images that must l
 - Complete asset packages
 - Atomic transparent assets
 - Page-local resources
+- Component-state coverage
 - Visual QA and mapping manifests
 
 For quick mood exploration or one-off concept images, the full resource package can be skipped if the user explicitly does not need reconstruction assets.
@@ -51,13 +71,15 @@ Design brief
 -> Transparent assets and cutouts
 -> Mapping manifests
 -> QA inventory
--> Handoff to ai2figma-struct
+-> Handoff to ai2figma-struct or another reconstruction workflow
 ```
 
-The skill is usually used before `ai2figma-struct`:
+The skill is commonly used before `ai2figma-struct`:
 
 1. `ai2psd-struct` generates the structured image package.
 2. `ai2figma-struct` consumes that package to rebuild editable Figma layers.
+
+Other reconstruction workflows can also consume the package if they follow the same manifest and asset contracts.
 
 ## Output Structure
 
@@ -140,9 +162,51 @@ When chroma-key removal is needed, choose the matte color per asset. Do not defa
 
 ## Installation
 
-### Manual Codex Skill Install
+### Install From npm
 
-Clone this repository into your Codex skills directory:
+After the package is published, install it globally:
+
+```bash
+npm install -g @<scope>/ai2psd-struct
+```
+
+This package should expose a CLI command:
+
+```bash
+ai2psd-struct
+```
+
+Because different AI agents store skills in different locations, the npm package should not assume one fixed runtime. Instead, use an explicit install command:
+
+```bash
+ai2psd-struct install --target codex
+ai2psd-struct install --target claude
+ai2psd-struct install --target cursor
+ai2psd-struct install --path ./skills/ai2psd-struct
+```
+
+Recommended behavior:
+
+```text
+npm package
+-> contains SKILL.md
+-> contains references/
+-> contains scripts/
+-> contains agents/
+-> installer copies or links files into the selected agent skill directory
+```
+
+The `--path` option should always be supported so users can install the skill into any custom agent runtime.
+
+### Manual Install
+
+You can also clone this repository into any agent-readable skills directory:
+
+```bash
+git clone https://github.com/<owner>/ai2psd-struct.git ./skills/ai2psd-struct
+```
+
+For Codex-compatible local skill folders, one possible install path is:
 
 ```bash
 git clone https://github.com/<owner>/ai2psd-struct.git ~/.codex/skills/ai2psd-struct
@@ -154,43 +218,28 @@ On Windows PowerShell:
 git clone https://github.com/<owner>/ai2psd-struct.git "$env:USERPROFILE\.codex\skills\ai2psd-struct"
 ```
 
-Restart Codex after installing or updating the skill.
-
-### Install From npm
-
-Codex skills are loaded from the Codex skills directory, not directly from `node_modules`. An npm package therefore needs an installer script that copies this skill into:
-
-```text
-~/.codex/skills/ai2psd-struct
-```
-
-Recommended user command after publishing:
-
-```bash
-npm install -g @<scope>/ai2psd-struct
-```
-
-The package should run a `postinstall` script, or expose a CLI command, that installs the skill files into the Codex skills directory.
+Restart or reload your agent runtime after installing or updating the skill.
 
 ## npm Publishing Checklist
 
 To make this repository installable through npm:
 
 1. Add a `package.json`.
-2. Add an installer script, for example `bin/install.js`.
-3. Include `SKILL.md`, `references/`, `scripts/`, and `agents/` in the published package.
-4. Test the package locally with `npm pack`.
-5. Install the packed `.tgz` file globally and confirm the skill appears under `~/.codex/skills/ai2psd-struct`.
-6. Publish to npm with `npm publish --access public`.
-7. Add the npm install command to this README.
+2. Add a CLI installer script, for example `bin/ai2psd-struct.js`.
+3. Support explicit install targets such as `--target codex` and `--path <directory>`.
+4. Include `SKILL.md`, `references/`, `scripts/`, and `agents/` in the published package.
+5. Test the package locally with `npm pack`.
+6. Install the packed `.tgz` file globally and confirm the installer can copy files into a custom skill directory.
+7. Publish to npm with `npm publish --access public`.
+8. Add the final npm package name to this README.
 
-Example `package.json`:
+Recommended `package.json`:
 
 ```json
 {
   "name": "@<scope>/ai2psd-struct",
   "version": "0.1.0",
-  "description": "Codex skill for generating structured UI design-image packages for editable Figma reconstruction.",
+  "description": "Agent-agnostic skill for generating structured UI design-image packages for editable Figma reconstruction.",
   "license": "MIT",
   "type": "module",
   "files": [
@@ -201,32 +250,46 @@ Example `package.json`:
     "bin"
   ],
   "bin": {
-    "ai2psd-struct-skill": "./bin/install.js"
-  },
-  "scripts": {
-    "postinstall": "node ./bin/install.js --postinstall"
+    "ai2psd-struct": "./bin/ai2psd-struct.js"
   },
   "keywords": [
-    "codex",
-    "codex-skill",
+    "ai-agent",
+    "agent-skill",
     "figma",
     "ui-design",
     "design-handoff",
-    "ai2figma"
+    "ai2figma",
+    "structured-assets"
   ]
 }
 ```
 
-Example install behavior:
+Avoid default `postinstall` writes into a specific agent directory. Explicit installation is safer and more portable:
+
+```bash
+ai2psd-struct install --target codex
+ai2psd-struct install --path ~/.some-agent/skills/ai2psd-struct
+```
+
+## Suggested CLI Behavior
+
+The npm CLI can be simple:
 
 ```text
-package install location
--> copy SKILL.md
--> copy references/
--> copy scripts/
--> copy agents/
--> ~/.codex/skills/ai2psd-struct
+ai2psd-struct install --target codex
+ai2psd-struct install --target claude
+ai2psd-struct install --target cursor
+ai2psd-struct install --path <directory>
+ai2psd-struct doctor
+ai2psd-struct info
 ```
+
+Suggested command meanings:
+
+- `install --target <name>`: install into a known agent skill directory
+- `install --path <directory>`: install into a custom directory
+- `doctor`: check whether required files exist after installation
+- `info`: print package version, included files, and supported install targets
 
 ## Local npm Test Flow
 
@@ -237,16 +300,11 @@ npm pack
 npm install -g ./<generated-package-name>.tgz
 ```
 
-Then confirm the skill exists:
+Then test installation into a temporary directory:
 
 ```bash
-ls ~/.codex/skills/ai2psd-struct
-```
-
-On Windows PowerShell:
-
-```powershell
-Get-ChildItem "$env:USERPROFILE\.codex\skills\ai2psd-struct"
+ai2psd-struct install --path ./tmp-skills/ai2psd-struct
+ai2psd-struct doctor --path ./tmp-skills/ai2psd-struct
 ```
 
 ## Suggested Prompt
@@ -263,7 +321,21 @@ Generate foundation boards, screen references, shared transparent assets, page-l
 
 `ai2psd-struct` produces the structured package. `ai2figma-struct` consumes it.
 
-The package should be complete enough that `ai2figma-struct` can rebuild native structure, place atomic assets using manifest metadata, preserve known risks, and avoid substituting similar-looking assets.
+The package should be complete enough that `ai2figma-struct` or another compatible reconstruction workflow can rebuild native structure, place atomic assets using manifest metadata, preserve known risks, and avoid substituting similar-looking assets.
+
+## Repository Contents
+
+```text
+SKILL.md
+references/
+scripts/
+agents/
+```
+
+- `SKILL.md`: main workflow instructions and gates
+- `references/`: detailed contracts, prompt patterns, manifest schema, transparent asset checks, and handoff guidance
+- `scripts/`: validation and local paste-back QA helpers
+- `agents/`: optional agent-specific metadata or adapter files
 
 ## License
 
