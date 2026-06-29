@@ -1,0 +1,35 @@
+{
+  "name": "ai2psd-struct",
+  "version": "1.0.0",
+  "description": "Agent-agnostic skill for generating structured UI design-image packages for editable Figma reconstruction.",
+  "main": "SKILL.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Byron1017/ai2psd-struct.git"
+  },
+  "keywords": [
+    "codex",
+    "skill",
+    "figma",
+    "ui-rebuild",
+    "ai-design",
+    "ui-struct"
+  ],
+  "author": "Byron1017",
+  "license": "MIT",
+  "files": [
+    "SKILL.md",
+    "references",
+    "scripts",
+    "agents",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "ai2figma-install": "./scripts/install.js"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0"
+  }
+}
+
